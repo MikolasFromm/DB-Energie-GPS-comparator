@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32929.385
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LokoTrain_DBE_comparator_forms", "LokoTrain_DBE_comparator_forms.csproj", "{F15D918B-0557-4EFE-97AF-BC3CDA0F288F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DBE_comparator_xUnit", "..\DBE_comparator_xUnit\DBE_comparator_xUnit.csproj", "{AA63EBF6-6BD7-4A20-89CA-01E75D763452}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F15D918B-0557-4EFE-97AF-BC3CDA0F288F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F15D918B-0557-4EFE-97AF-BC3CDA0F288F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F15D918B-0557-4EFE-97AF-BC3CDA0F288F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F15D918B-0557-4EFE-97AF-BC3CDA0F288F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AA63EBF6-6BD7-4A20-89CA-01E75D763452}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA63EBF6-6BD7-4A20-89CA-01E75D763452}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA63EBF6-6BD7-4A20-89CA-01E75D763452}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA63EBF6-6BD7-4A20-89CA-01E75D763452}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F1D8BC02-19B2-45A7-88B3-2D7C25B278E1}
+	EndGlobalSection
+EndGlobal
