@@ -34,6 +34,6 @@
 
         void ExportAndFillTemplate(EvaluationResults evaluation, Dictionary<int, LocoId> LocoIdForGivenColumn);
 
-        void AddOutputDir(string outputDir);
+        IExporter AddOutputDir(string outputDir);
     }
 }

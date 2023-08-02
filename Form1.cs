@@ -9,6 +9,7 @@ namespace LokoTrain_DBE_comparator_forms
         // input file paths
         public string inputFilePath { get; set; } = string.Empty;
         public string lokoUsageFilePath { get; set; } = string.Empty;
+        public string outputDir { get; set; } = string.Empty;
 
 
         // GPS input paths and loaded flags
@@ -120,13 +121,13 @@ namespace LokoTrain_DBE_comparator_forms
                 if (checkBox_Abstimmung.Checked)
                 {
                     DbeWrapper = new DBE_wrapper(inputFilePath);
-                    Exporter = new Exporter(inputFilePath);
+                    Exporter = new Exporter(inputFilePath).AddOutputDir(outputDir);
                     checkMethod = CheckMethod.InvoiceCheck; // freezing the user-choice
                 }
                 else
                 {
                     DbeWrapper = new DBE_abstimmung_wrapper(inputFilePath);
-                    Exporter = new Exporter(inputFilePath);
+                    Exporter = new Exporter(inputFilePath).AddOutputDir(outputDir);
                     checkMethod = CheckMethod.PreCheck; // freezing the user-choice
                 }
 
@@ -260,7 +261,14 @@ namespace LokoTrain_DBE_comparator_forms
         {
             if (folderBrowserDialog_OutputDir.ShowDialog() == DialogResult.OK && !string.IsNullOrEmpty(folderBrowserDialog_OutputDir.SelectedPath))
             {
-                Exporter.AddOutputDir(folderBrowserDialog_OutputDir.SelectedPath);
+                if (Exporter is null)
+                {
+                    outputDir = folderBrowserDialog_OutputDir.SelectedPath;
+                }
+                else
+                {
+                    Exporter.AddOutputDir(folderBrowserDialog_OutputDir.SelectedPath);
+                }
 
                 button_OpenFileDialog_OutputDir.ForeColor = Color.Green;
             }

@@ -35,9 +35,12 @@ namespace LokoTrain_DBE_comparator_forms
             this.dbe_input_filename = filePath;
         }
 
-        public void AddOutputDir(string outputDir)
+        public IExporter AddOutputDir(string outputDir)
         {
-            this.operator_output_resultDir = outputDir;
+            if (string.IsNullOrEmpty(outputDir))
+                this.operator_output_resultDir = outputDir;
+
+            return this;
         }
 
         private interface IExcelWrapper
