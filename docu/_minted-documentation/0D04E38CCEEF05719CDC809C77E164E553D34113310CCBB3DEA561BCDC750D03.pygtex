@@ -1,0 +1,9 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{public}\PYG{+w}{ }\PYG{k}{interface}\PYG{+w}{ }\PYG{n}{ILokoUsage\PYGZus{}wrapper}
+\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{c+c1}{// indexed by locomotive, containing \PYGZdq{}from \PYGZhy{} to\PYGZdq{} and customer name for each time span.}
+\PYG{+w}{    }\PYG{n}{Dictionary}\PYG{o}{\PYGZlt{}}\PYG{n}{LocoId}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{List}\PYG{o}{\PYGZlt{}}\PYG{n}{CustomerDateSpan}\PYG{o}{\PYGZgt{}\PYGZgt{}}\PYG{+w}{ }\PYG{n}{GetAllCustomers}\PYG{p}{(}\PYG{n}{IEnumerable}\PYG{o}{\PYGZlt{}}\PYG{n}{LocoId}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{locomotives}\PYG{p}{);}
+
+\PYG{+w}{    }\PYG{n}{IList}\PYG{o}{\PYGZlt{}}\PYG{k+kt}{string}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{CustomerNames}\PYG{+w}{ }\PYG{p}{\PYGZob{}}\PYG{+w}{ }\PYG{k}{get}\PYG{p}{;}\PYG{+w}{ }\PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

@@ -1,0 +1,177 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper]{geometry}
+
+\usepackage{amsmath}
+
+\usepackage{graphicx}
+
+\usepackage{hyperref}
+
+\usepackage{adjustbox}
+
+\usepackage{hyperref}
+
+\usepackage{minted}
+
+\usepackage[utf8]{inputenc}
+
+\title{DB Energie GPS comparator - Documentation}
+
+\author{Mikoláš Fromm}
+
+\date{02.08.2023}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+This document describes the DB Energie GPS comparator application. The application is used to compare the GPS data from the DB Energie invoicing system with the data from the GPS system of the vehicle. The whole application is written in C\# and is equipped with WinForms interface for easy use.
+
+\subsection*{Motivation}
+
+My motivation for this topic is my part-time job in a company which operates locomotives in Germany (on Deutsche Bahn infrastructure). Deutsche Bahn (or DB from now on) regularly send energy invoices that full of mistakes where they claim the locomotive was spending energy in Germany, even though in reality the locomotive was outside Germany completely, for example in Hungary. Therefore is then needed to compare all timestamps from the DB invoices with the location data from the locomotive GPS system. This is a very time-consuming process, therefore I decided to automate it.
+
+\subsection*{Goals}
+\label{sec:Goals}
+
+Major goal was to create an application capable of checking the correctness of the data from the invoice and separating the correct from the incorrect. Minor goals were also to automatically generate a refund request file and to automatically reassign all energy consumptions to all operators that were using the locomotive at the given time.
+
+\pagebreak
+
+\section{Application subdivision}
+
+The project is separated into the following sections:
+
+\begin{itemize}
+    \item \hyperref[sec:Wrappers]{Wrappers}
+    \subitem - \hyperref[sec:DBEnergieWrapper]{DB Energie wrapper}
+    \subitem - \hyperref[sec:GPSWrapper]{GPS wrapper}
+    \subitem - \hyperref[sec:LokoUsageWrapper]{LokoUsage wrapper}
+    \item \hyperref[sec:DataStructures]{Data structures}
+    \item \hyperref[sec:DataProcessing]{Data processing}
+    \subitem - \hyperref[sec:Comparator]{Comparator}
+    \subitem - \hyperref[sec:Exporter]{Exporter}
+    \item \hyperref[sec:WinFormInterface]{WinForm interface}
+\end{itemize}
+
+\pagebreak
+
+\subsection{Wrappers}
+\label{sec:Wrappers}
+
+Wrappers are used to communicate with or parse data from external systems. The main reason for this separation is to make the application more modular and easier to maintain. At the moment, none of the sources is offering any kind of API, therefore all the wrappers require uploading a .csv or .xslx file manually, but in case it changes, only the single wrapper will need to be modified and the rest of the application will remain the same.
+
+All the wrappers define their own Interface, with which the core of the application communicates. This interface is then implemented by the wrapper itself.
+
+\subsubsection{DB Energie wrapper}
+\label{sec:DBEnergieWrapper}
+
+\begin{minted}[fontsize=\small]{csharp}
+public interface IDBE_wrapper
+{
+    void GetAllEntriesFromDBE();
+
+    List<DbeEntry> Entries { get; }
+
+    HashSet<LocoId> LocosIncluded { get; }
+
+    public Dictionary<int, LocoId> LocoIdForGivenColumn { get; }
+}
+\end{minted}
+
+This wrapper currently has two implementations available:
+\begin{enumerate}
+    \item 
+    {
+    \begin{minted}[fontsize=\small]{csharp} 
+    // reading attachment for DBE invoice
+    public class DBE_wrapper : IDBE_wrapper
+    \end{minted}
+    }
+
+    \item
+    {
+    \begin{minted}[fontsize=\small]{csharp} 
+    // reading CSV export from BahnStromPortal
+    public class DBE_abstimmung_wrapper : IDBE_wrapper
+    \end{minted}
+    }
+\end{enumerate}
+where the first one parses the input .csv file, which is attached to the DB Energie invoice and which has one 15 minutes long energy consumption timespan for each locomotive on separate row. It is also to notice that the invoice contains only the locomotives that were spending energy in Germany and that the entries in the attachement are sorted by the datetime, which is later used in evaluation.
+
+The second implementation is used to parse the .csv file exported from the BahnStromPortal, which contains all the energy consumption timespans for all locomotives, even those that were not spending energy in Germany. The entries are also sorted by datetime, but each row contains entry for each locomotive. This information must be saved for later evaluation, therefore the \begin{math}Dictionary<int, LocoId>\end{math} is used, where the key is the column number and the value is the LocoId of the locomotive in that column.
+
+The application is also prepared for a very big amount of data, therefore the wrapper is not saving all entries to the memory, but only saves the datetime span, locoId and the coordinates of the whole entry. This implies that the data file is read multiple times during the evaluation, but the user memory will be saved.
+
+\pagebreak
+
+
+\subsubsection{GPS wrapper}
+\label{sec:GPSWrapper}
+
+\begin{minted}[fontsize=\small]{csharp}
+public interface IGPS_wrapper
+{
+    // indexed by each loco, containing sorted dates "from - to" in germany
+    Dictionary<LocoId, List<DateSpan>> GetAllTimesInGermany(Dictionary<LocoId, 
+                                                            GpsLocoFilePath> gpsMapping);
+    HashSet<LocoId> LocomotivesWithOutGPS { get; }
+}
+\end{minted}
+
+This wrapper is used to parse the GPS data from the locomotive GPS system. It uses output from PosiTrex GPS system, which is able to export all border-crossings which determines exactly when each locomotive has entered / left a specific country. PosiTrex is capable of exporting only a file per locomotive, therefore the implementation requires a filePath to the border-crossing file of each locomotive involved. Then in only reads the file line by line, where one line contains dateFrom, dateTo and the country of the activity, and filters out only the lines containing "Germany" as the country. The result is then saved in the \begin{math}Dictionary<LocoId, List<DateSpan>>\end{math}, where the key is the LocoId and the value is the list of all the timespans when the locomotive was in Germany.
+
+It might also happen that the locomotive has faulty or no GPS system installed and therefore the GPS data is not available. In this case, the locomotive is considered to be in Germany for the whole time and the entry is saved in the \begin{math}HashSet<LocoId>LocomotivesWithOutGPS\end{math} to later notify the user about this fact.
+
+\subsubsection{LokoUsage wrapper}
+\label{sec:LokoUsageWrapper}
+
+\begin{minted}[fontsize=\small]{csharp}
+public interface ILokoUsage_wrapper
+{
+    // indexed by locomotive, containing "from - to" and customer name for each time span.
+    Dictionary<LocoId, List<CustomerDateSpan>> GetAllCustomers(IEnumerable<LocoId> locomotives);
+
+    IList<string> CustomerNames { get; }
+}
+\end{minted}
+
+\subsection{Data structures}
+\label{sec:DataStructures}
+
+\subsection{Data processing}
+\label{sec:DataProcessing}
+
+\subsubsection{Comparator}
+\label{sec:Comparator}
+
+\pagebreak
+
+\subsubsection{Exporter}
+\label{sec:Exporter}
+
+\begin{minted}[fontsize=\small]{csharp}
+public interface IExporter
+{
+    void ExportAndFillTemplate(EvaluationResults evaluationResults,
+                               Dictionary<LocoId, List<CustomerDateSpan>> customerDateTimes, 
+                               IEnumerable<string> customerNames, 
+                               double price);
+
+    void ExportAndFillTemplate(EvaluationResults evaluationResults);
+
+    void ExportAndFillTemplate(EvaluationResults evaluation, 
+                               Dictionary<int, LocoId> LocoIdForGivenColumn);
+
+    IExporter AddOutputDir(string outputDir);
+}
+\end{minted}
+
+\subsection{WinForm interface}
+\label{sec:WinFormInterface}
+
+
+\end{document}

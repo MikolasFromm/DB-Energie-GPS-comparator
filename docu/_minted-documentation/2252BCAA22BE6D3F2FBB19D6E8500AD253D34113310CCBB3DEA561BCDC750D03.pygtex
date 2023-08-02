@@ -1,0 +1,4 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{+w}{    }\PYG{c+c1}{// reading attachment for DBE invoice}
+\PYG{+w}{    }\PYG{k}{public}\PYG{+w}{ }\PYG{k}{class}\PYG{+w}{ }\PYG{n+nc}{DBE\PYGZus{}wrapper}\PYG{+w}{ }\PYG{p}{:}\PYG{+w}{ }\PYG{n}{IDBE\PYGZus{}wrapper}
+\end{Verbatim}
