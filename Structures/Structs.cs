@@ -14,11 +14,13 @@
 
     public struct GpsLocoFilePath
     {
+        public string path;
+
         public GpsLocoFilePath(string value)
         {
             path = value;
         }
-        public string path;
+        
 
         public static GpsLocoFilePath Default()
         {
