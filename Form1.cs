@@ -44,8 +44,12 @@ namespace LokoTrain_DBE_comparator_forms
             label_ChooseGpsToEachLoco.Font = new Font("Segoe UI", 12);
             panel_LocoGPS.Controls.Add(label_ChooseGpsToEachLoco);
 
+            // sort locos
+            List<LocoId> locosSorted = new List<LocoId>(locos);
+            locosSorted = locosSorted.OrderBy(x => x.shortId).ToList();
+
             int i = 0;
-            foreach (var loco in locos)
+            foreach (var loco in locosSorted)
             {
                 // create default entry for each loco
                 var gpsLocoFilePath = GpsLocoFilePath.Default();
