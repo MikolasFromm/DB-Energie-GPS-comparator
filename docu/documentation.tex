@@ -122,7 +122,7 @@ public interface IGPS_wrapper
 }
 \end{minted}
 
-This wrapper is used to parse the GPS data from the locomotive GPS system. It uses output from PosiTrex GPS system, which is able to export all border-crossings which determines exactly when each locomotive has entered / left a specific country. PosiTrex is capable of exporting only a file per locomotive, therefore the implementation requires a filePath to the border-crossing file of each locomotive involved. Then in only reads the file line by line, where one line contains dateFrom, dateTo and the country of the activity, and filters out only the lines containing "Germany" as the country. The result is then saved in the \begin{math}Dictionary<LocoId, List<DateSpan>>\end{math}, where the key is the LocoId and the value is the list of all the timespans when the locomotive was in Germany.
+This wrapper is used to parse the GPS data from the locomotive GPS system. It uses output from PosiTrex GPS system, which is able to export all border-crossings which determines exactly when each locomotive has entered / left a specific country. PosiTrex is capable of exporting only a file per locomotive, therefore the implementation requires a filePath to the border-crossing file of each locomotive involved. Then it only reads the file line by line, where one line contains dateFrom, dateTo and the country of the activity, and filters out only the lines containing "Germany" as the country. The result is then saved in the \begin{math}Dictionary<LocoId, List<DateSpan>>\end{math}, where the key is the LocoId and the value is the list of all the timespans when the locomotive was in Germany.
 
 It might also happen that the locomotive has faulty or no GPS system installed and therefore the GPS data is not available. In this case, the locomotive is considered to be in Germany for the whole time and the entry is saved in the \begin{math}HashSet<LocoId>LocomotivesWithOutGPS\end{math} to later notify the user about this fact.
 
@@ -139,16 +139,119 @@ public interface ILokoUsage_wrapper
 }
 \end{minted}
 
+This wrapper parses an input file, which holds for every locomotive and for every day (that might be split into more pieces) a customer name, who was using the locomotive at the time. It is a .xlsx file where each locomotive is on a single sheet, named by its LocoId. This wrapper is invoked after a DB Energie input file is read, therefore only the contained locomotives are parsed. The result is then saved in the \begin{math}Dictionary<LocoId, List<CustomerDateSpan>>\end{math}, where the key is the LocoId and the value is the list of all the timespans when the locomotive was used by a specific customer. \textit{CustomerDateSpan} is almost like a \textit{DateSpan}, but it also contains the customer name.
+
+Asides from the data, the wrapper also saves all the customer names in the \begin{math}IList<string>CustomerNames\end{math} to later generate a file for each customer.
+
+\pagebreak
+
 \subsection{Data structures}
 \label{sec:DataStructures}
+
+The application uses the following data structures instead of the primitive types in order to maximize the readability of the code and to make the code more self-explanatory.
+
+\begin{enumerate}
+\item[] \begin{minted}{csharp}
+public struct LocoId {
+    public string shortId;
+    public string longId; }
+\end{minted}
+\item[] \begin{minted}{csharp}
+public record struct SheetIndex {
+    public int row;
+    public int column; }
+\end{minted}
+\item[] \begin{minted}{csharp}
+public struct GpsLocoFilePath {
+    public string path; }
+\end{minted}
+\item[] \begin{minted}{csharp}
+public enum CheckMethod {
+    None,
+    InvoiceCheck,
+    PreCheck }
+\end{minted}
+\item[] \begin{minted}{csharp}
+public enum DistributionResult {
+    NoError,
+    IncludingErrors }
+\end{minted}
+\item[] \begin{minted}{csharp}
+public record struct CustomerDateSpan {
+    public DateSpan dateSpan;
+    public string customerName; }
+\end{minted}
+\item[] \begin{minted}{csharp}
+public record struct DbeEntry {
+    public DateTime date;
+    public LocoId id;
+    public SheetIndex sheet_index; }
+\end{minted}
+\item[] \begin{minted}{csharp}
+public record struct DateSpan {
+    public DateTime startDate;
+    public DateTime endDate; }
+\end{minted}
+\end{enumerate}
+
+\pagebreak
 
 \subsection{Data processing}
 \label{sec:DataProcessing}
 
+This section contains the core of the application, where the data from the wrappers is processed and evaluated. Since more than one evaluation method is available, the application uses the \begin{math}CheckMethod\end{math} enum to determine which method should be used.
+
 \subsubsection{Comparator}
 \label{sec:Comparator}
 
+\begin{minted}[fontsize=\small]{csharp}
+public static class Comparator {
+    // supportive method for parsing the locomotive id from the DBE entry
+    public static LocoId GetLocoId(string locomotive) {...}
+
+    // main unit deciding whether the entry is correct or not
+    public static EvaluationResults EvaluateResults(
+        IEnumerable<LocoId> locomotives_in_germany
+        IEnumerable<DbeEntry> dbe_entries, 
+        Dictionary<LocoId, List<DateSpan>> real_loco_dates_in_germany) {...}
+
+    // Invoice check with operators split
+    public static void MakeCompareWork(
+        Dictionary<LocoId, GpsLocoFilePath> gpsMapping, 
+        IEnumerable<DbeEntry> dbeEntries, 
+        HashSet<LocoId> locosInGermany, 
+        IGPS_wrapper gpsWrapper, 
+        ILokoUsage_wrapper lokoUsageWrapper, 
+        IExporter exporter, 
+        double price = 0, 
+        bool splitCustomers = false) {...}  
+
+    // Invoice check without operators split
+    public static void MakeCompareWork(
+        Dictionary<LocoId, GpsLocoFilePath> gpsMapping, 
+        IEnumerable<DbeEntry> dbeEntries, 
+        HashSet<LocoId> locosInGermany, 
+        IGPS_wrapper gpsWrapper, 
+        IExporter exporter) {...}
+
+    // Pre-check without operators split
+    public static void MakeCompareWork(
+        Dictionary<LocoId, GpsLocoFilePath> gpsMapping, 
+        IEnumerable<DbeEntry> dbeEntries, 
+        Dictionary<int, LocoId> locoIdForGivenColumn, 
+        HashSet<LocoId> locosInGermany, 
+        IGPS_wrapper gpsWrapper, 
+        IExporter exporter) {...}
+}
+\end{minted}
+
 \pagebreak
+
+The \textit{EvaluateResults} method is the main unit of the application, where the data from the DBE invoice is compared with the data from the GPS system. For the successful evaluation, it is required that both \textit{dbe\_entries} and \textit{real\_loco\_dates\_in\_germany} are datetime sorted. As long as the dbe\_entry is in the range of any real stay of the locomotive in Germany, the entry is considered to be correct. If the entry is outside the range, it tries to move to the next range and if it is not even in that range, it is considered to be incorrect.
+
+The output of the evaluation is the \textit{EvaluationResults} object, which contains information about error entries, which are grouped together, and about each locomotive stays, which is then used to generate the output files.
+
+Above that all is the main function \textit{MakeCompareWork} which is gathering all necessary data from the wrappers and then invokes the \textit{EvaluateResults} method. The method is overloaded to support all the evaluation methods available. Because the \textit{EvaluateResults} function does not split the entries by operators, the \textit{MakeCompareWork} method is also overloaded to support splitting the entries by operators. This is done by the \textit{IExporter} interface, which is overloaded to generate more type of outputs, one of which is the output file for each operator.
 
 \subsubsection{Exporter}
 \label{sec:Exporter}
@@ -156,22 +259,45 @@ public interface ILokoUsage_wrapper
 \begin{minted}[fontsize=\small]{csharp}
 public interface IExporter
 {
+    // export the evaluation and split the entries by operators
     void ExportAndFillTemplate(EvaluationResults evaluationResults,
                                Dictionary<LocoId, List<CustomerDateSpan>> customerDateTimes, 
                                IEnumerable<string> customerNames, 
                                double price);
 
+    // export the evaluation without splitting the entries by operators
     void ExportAndFillTemplate(EvaluationResults evaluationResults);
 
+    // export the pre-check evaluation without splitting the entries by operators
     void ExportAndFillTemplate(EvaluationResults evaluation, 
                                Dictionary<int, LocoId> LocoIdForGivenColumn);
 
+    // add the output directory given by user from the WinForm interface
     IExporter AddOutputDir(string outputDir);
 }
 \end{minted}
 
+The \textit{Exporter} is filling prepared templates from the \textit{templates} folder with the data from the evaluation. Because the customer should get the most of the information possible, the template is filled with all the rows from the source file that have been considered correct earlier. This is also the reason, why \textit{SheetIndexes} are stored at the beginning of the evaluation. 
+
+\pagebreak
+
+Independently on the customer-split, a refund file, containing all the dates of the incorrect entries, is generated. This file is in different format than the template for users. It contains fullId of the locomotive, Id of the virtual energy card of the curernt operator, dateFrom and dateTo of the incorrect entry and the position of the locomotive (Interior or Exterior - relative to the Germany).
+
+All of these files are then saved in the output directory, which is given by the user in the WinForm interface.
+
 \subsection{WinForm interface}
 \label{sec:WinFormInterface}
 
+The WinForm interface is used to make the application more user-friendly. It is also used to gather all the necessary data from the user, such as the input files, output directory, price of the energy, etc. The interface is also used to invoke the \textit{MakeCompareWork} method from the \textit{Comparator} class.
+
+User is first prompted to choose the input file, which should be checked. Both types of checking require the input file to be a .csv file. Therefore, file-type filter is set in the FileDialog. The user must then choose one of the two checking methods by clicking on the appropriate checkBox. The first one is the invoice check, which is used to check the correctness of the DB Energie invoice. The second one is the pre-check, which is used to check the correctness of the data from the BahnStromPortal. Both checks require to choose the GPS data file for each locomotive, which are then used to compare the data from the invoice with the data from the GPS system.
+
+When the input file is chosen, the application scans the file completely to find all contained locomotives and generates for each locomotive one fileDialog button, allowing the user to match the GPS file with the locomotive easily. 
+
+When checking the DB Energie invoice and also choosing to make the customer split, the user is also prompted to choose the file containing the customer leases, which serves as a source of datetimes when the locomotive was used by a specific customer. This file is then parsed by the \textit{LokoUsageWrapper} and the result is used to split the entries by operators.
+
+Lastly, when choosing to make a customer split, it is also required to enter a price of the energy, which is then used to calculate the amount of money that should be reinvoiced to each operator.
+
+User also has a possibility to choose the output directory, where all the output files will be saved. If the user does not choose any output directory, the files will be saved in the fixed \textit{results} directory in the root of the project directory.
 
 \end{document}
