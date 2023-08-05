@@ -396,3 +396,7 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+docu/documentation.aux
+docu/documentation.fdb_latexmk
+docu/documentation.fls
+docu/documentation.synctex.gz
