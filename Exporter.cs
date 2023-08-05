@@ -37,7 +37,7 @@ namespace LokoTrain_DBE_comparator_forms
 
         public IExporter AddOutputDir(string outputDir)
         {
-            if (string.IsNullOrEmpty(outputDir))
+            if (!string.IsNullOrEmpty(outputDir))
                 this.operator_output_resultDir = outputDir;
 
             return this;
