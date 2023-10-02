@@ -18,14 +18,14 @@ namespace LokoTrain_DBE_comparator_forms
         const int single_file_startdate_column_index = 4;
         const int single_file_enddate_column_index = 5;
 
-        const string operator_output_templateDir = "templates";
+        const string operator_output_templateDir = "DBE_comparator_templates";
         const string operator_output_templateFileName = "vypis_dopravce_template.xlsx";
         const string operator_output_fallbackFileName = "fallback";
         const string operator_output_errorFileName = "error";
         const string refund_output_templateFileName = "Anlage9_Aufenthaltsstatus_DBEnergie.xlsx";
 
 
-        private string operator_output_resultDir = "results";
+        private string operator_output_resultDir = "DBE_comparator_results";
         private string dbe_input_filename;
         private double price;
         private char delimiter = ';';
@@ -275,10 +275,14 @@ namespace LokoTrain_DBE_comparator_forms
 
         public void ExportAndFillTemplate(EvaluationResults evaluationResults, Dictionary<LocoId, List<CustomerDateSpan>> customerDateTimes, IEnumerable<string> customerNames, double price)
         {
+            bool useExportPaths = false;
+
             string projectDirectory = null;
+            string exportProjectDirectory = null;
             try
             {
                 projectDirectory = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
+                exportProjectDirectory = Environment.CurrentDirectory;
             }
             catch 
             {
@@ -286,17 +290,48 @@ namespace LokoTrain_DBE_comparator_forms
             }
             
             string templatePath = Path.Combine(projectDirectory, operator_output_templateDir, operator_output_templateFileName);
-            string templateRefundPath = Path.Combine(projectDirectory, operator_output_templateDir, refund_output_templateFileName);
-            string outputDirPath = Path.Combine(projectDirectory, operator_output_resultDir);
+            string exportTemplatePath = Path.Combine(exportProjectDirectory, operator_output_templateDir, operator_output_templateFileName);
 
-            if (!Directory.Exists(outputDirPath))
-                Directory.CreateDirectory(outputDirPath);
+            string templateRefundPath = Path.Combine(projectDirectory, operator_output_templateDir, refund_output_templateFileName);
+            string exportTemplateRefundPath = Path.Combine(exportProjectDirectory, operator_output_templateDir, refund_output_templateFileName);
+
+            string outputDirPath = Path.Combine(projectDirectory, operator_output_resultDir);
+            string exportOutputDirPath = Path.Combine(exportProjectDirectory, operator_output_resultDir);
+
+            if (!Directory.Exists(outputDirPath) && !Directory.Exists(exportOutputDirPath))
+                Directory.CreateDirectory(exportOutputDirPath);
 
             if (!File.Exists(templatePath))
-                throw new Exception("Template file not found");
+            {
+                if (!File.Exists(exportTemplatePath))
+                {
+                    throw new Exception("Template file not found");
+                }
+                else
+                {
+                    useExportPaths = true;
+                }
+            }
+                
 
             if (!File.Exists(templateRefundPath))
-                throw new Exception("Template refund file not found");
+            {
+                if (!File.Exists(exportTemplateRefundPath))
+                {
+                    throw new Exception("Template refund file not found");
+                }
+                else
+                {
+                    useExportPaths = true;
+                }
+            }
+
+            if (useExportPaths)
+            {
+                templatePath = exportTemplatePath;
+                templateRefundPath = exportTemplateRefundPath;
+                outputDirPath = exportOutputDirPath;
+            }
 
             Dictionary<string, IExcelWrapper> customerSheets = new();
             HashSet<string> untouchedCustomers = new();
