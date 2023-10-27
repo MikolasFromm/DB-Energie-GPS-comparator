@@ -252,7 +252,7 @@ namespace LokoTrain_DBE_comparator_forms
                 result = MessageBox.Show("Porovnání dokonèeno. Po stisknutí OK ukonèíte program.", "Hotovo", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
             else
-               result = MessageBox.Show(e.Error.Message, "Chyba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+               result = MessageBox.Show($"{e.Error.Message}\n{e.Error.Source}\n{e.Error.StackTrace}", "Chyba", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
             if (result == DialogResult.OK)
             {

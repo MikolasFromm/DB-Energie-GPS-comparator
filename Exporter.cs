@@ -1,9 +1,6 @@
 ﻿using Excel = Microsoft.Office.Interop.Excel;
-using System.IO;
-using System.Configuration;
 using LokoTrain_DBE_comparator_forms.Structures;
-using Microsoft.Office.Interop.Excel;
-using System.Runtime.CompilerServices;
+using System.Globalization;
 
 namespace LokoTrain_DBE_comparator_forms
 {
@@ -383,7 +380,7 @@ namespace LokoTrain_DBE_comparator_forms
                     string[] lineResultRaw = line.Split(delimiter);
 
                     string[] lineResultString = lineResultRaw.Take(6).ToArray();
-                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index]), Double.Parse(lineResultRaw[single_file_recuperation_column_index]) };
+                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index], CultureInfo.InvariantCulture), Double.Parse(lineResultRaw[single_file_recuperation_column_index], CultureInfo.InvariantCulture) };
 
                     DateTime startDate = DateTime.Parse(lineResultRaw[single_file_startdate_column_index]);
                     DateTime endDate = DateTime.Parse(lineResultRaw[single_file_enddate_column_index]);
@@ -423,7 +420,7 @@ namespace LokoTrain_DBE_comparator_forms
                     string[] lineResultRaw = line.Split(delimiter);
 
                     string[] lineResultString = lineResultRaw.Take(6).ToArray();
-                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index]), Double.Parse(lineResultRaw[single_file_recuperation_column_index]) };
+                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index], CultureInfo.InvariantCulture), Double.Parse(lineResultRaw[single_file_recuperation_column_index], CultureInfo.InvariantCulture) };
 
                     LocoId locoId = Comparator.GetLocoId(lineResultRaw[single_file_loco_id_column_index]);
                     DateTime startDate = DateTime.Parse(lineResultRaw[single_file_startdate_column_index]);
@@ -518,7 +515,7 @@ namespace LokoTrain_DBE_comparator_forms
                     string[] lineResultRaw = line.Split(delimiter);
 
                     string[] lineResultString = lineResultRaw.Take(6).ToArray();
-                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index]), Double.Parse(lineResultRaw[single_file_recuperation_column_index]) };
+                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index], CultureInfo.InvariantCulture), Double.Parse(lineResultRaw[single_file_recuperation_column_index], CultureInfo.InvariantCulture) };
 
                     LocoId locoId = Comparator.GetLocoId(lineResultRaw[single_file_loco_id_column_index]);
                     DateTime startDate = DateTime.Parse(lineResultRaw[single_file_startdate_column_index]);
@@ -608,18 +605,18 @@ namespace LokoTrain_DBE_comparator_forms
                 {
                     int entry_row = entry.row;
                     int entry_column = entry.column;
-                    string loco_id = locoIdForGivenColumn[entry_column].shortId;
+                    string loco_id = locoIdForGivenColumn[entry_column].longId;
 
                     while (entry_row >= row) { line = reader.ReadLine(); row++; } // multiple entries can be in one line. Newline read is only when entry_row >= row (must be = for loading the current line)
                     if (line is null)
                         break;
 
                     string[] results = line.Split(delimiter);
-                    error_consumption += Double.Parse(results[entry_column]);
-                    error_recuperation += Double.Parse(results[entry_column + 2]);
+                    error_consumption += Double.Parse(results[entry_column], CultureInfo.InvariantCulture);
+                    error_recuperation += Double.Parse(results[entry_column + 2], CultureInfo.InvariantCulture);
 
                     DateTime startDate = DateTime.Parse(results[0]);
-                    DateTime endDate = DateTime.Parse(results[1]);
+                    DateTime endDate = DateTime.Parse(results[1]);  
 
                     if (error_occupations.ContainsKey(loco_id))
                     {
@@ -632,17 +629,28 @@ namespace LokoTrain_DBE_comparator_forms
                             excelWrapper.WriteLine(new string[] {
                                 locoIdForGivenColumn[entry_column].longId,
                                 VENT,
-                                $"{error_occupations[locoIdForGivenColumn[entry_column].shortId].Value.startDate.ToString("dd.MM.yyyy HH:mm")}",
-                                $"{error_occupations[locoIdForGivenColumn[entry_column].shortId].Value.endDate.ToString("dd.MM.yyyy HH:mm")}",
+                                $"{error_occupations[locoIdForGivenColumn[entry_column].longId].Value.startDate.ToString("dd.MM.yyyy HH:mm")}",
+                                $"{error_occupations[locoIdForGivenColumn[entry_column].longId].Value.endDate.ToString("dd.MM.yyyy HH:mm")}",
                                 NETZSTATUS
                             });
-                            error_occupations[locoIdForGivenColumn[entry_column].shortId] = new DateSpan(startDate, endDate);
+                            error_occupations[locoIdForGivenColumn[entry_column].longId] = new DateSpan(startDate, endDate);
                         }
                     }
                     else
                     {
-                        error_occupations.Add(locoIdForGivenColumn[entry_column].shortId, new DateSpan(startDate, endDate));
+                        error_occupations.Add(locoIdForGivenColumn[entry_column].longId, new DateSpan(startDate, endDate));
                     }
+                }
+
+                foreach (var occuupation in error_occupations)
+                {
+                    excelWrapper.WriteLine(new string[] {
+                                occuupation.Key,
+                                VENT,
+                                $"{occuupation.Value.Value.startDate.ToString("dd.MM.yyyy HH:mm")}",
+                                $"{occuupation.Value.Value.endDate.ToString("dd.MM.yyyy HH:mm")}",
+                                NETZSTATUS
+                            });
                 }
 
                 reader.Close();
