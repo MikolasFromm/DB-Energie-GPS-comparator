@@ -278,7 +278,7 @@ namespace LokoTrain_DBE_comparator_forms
             string exportProjectDirectory = null;
             try
             {
-                projectDirectory = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
+                projectDirectory = Directory.GetParent(Environment.CurrentDirectory).FullName;
                 exportProjectDirectory = Environment.CurrentDirectory;
             }
             catch 
@@ -380,7 +380,7 @@ namespace LokoTrain_DBE_comparator_forms
                     string[] lineResultRaw = line.Split(delimiter);
 
                     string[] lineResultString = lineResultRaw.Take(6).ToArray();
-                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index], CultureInfo.InvariantCulture), Double.Parse(lineResultRaw[single_file_recuperation_column_index], CultureInfo.InvariantCulture) };
+                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index], CultureInfo.CurrentCulture), Double.Parse(lineResultRaw[single_file_recuperation_column_index], CultureInfo.CurrentCulture) };
 
                     DateTime startDate = DateTime.Parse(lineResultRaw[single_file_startdate_column_index]);
                     DateTime endDate = DateTime.Parse(lineResultRaw[single_file_enddate_column_index]);
@@ -420,7 +420,7 @@ namespace LokoTrain_DBE_comparator_forms
                     string[] lineResultRaw = line.Split(delimiter);
 
                     string[] lineResultString = lineResultRaw.Take(6).ToArray();
-                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index], CultureInfo.InvariantCulture), Double.Parse(lineResultRaw[single_file_recuperation_column_index], CultureInfo.InvariantCulture) };
+                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index], CultureInfo.CurrentCulture), Double.Parse(lineResultRaw[single_file_recuperation_column_index], CultureInfo.CurrentCulture) };
 
                     LocoId locoId = Comparator.GetLocoId(lineResultRaw[single_file_loco_id_column_index]);
                     DateTime startDate = DateTime.Parse(lineResultRaw[single_file_startdate_column_index]);
@@ -487,7 +487,7 @@ namespace LokoTrain_DBE_comparator_forms
 
         public void ExportAndFillTemplate(EvaluationResults evaluationResults)
         {
-            string projectDirectory = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
+            string projectDirectory = Directory.GetParent(Environment.CurrentDirectory).FullName;
             string outputDirPath = Path.Combine(projectDirectory, operator_output_resultDir);
             string templateRefundPath = Path.Combine(projectDirectory, operator_output_templateDir, refund_output_templateFileName);
 
@@ -515,7 +515,7 @@ namespace LokoTrain_DBE_comparator_forms
                     string[] lineResultRaw = line.Split(delimiter);
 
                     string[] lineResultString = lineResultRaw.Take(6).ToArray();
-                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index], CultureInfo.InvariantCulture), Double.Parse(lineResultRaw[single_file_recuperation_column_index], CultureInfo.InvariantCulture) };
+                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index], CultureInfo.CurrentCulture), Double.Parse(lineResultRaw[single_file_recuperation_column_index], CultureInfo.CurrentCulture) };
 
                     LocoId locoId = Comparator.GetLocoId(lineResultRaw[single_file_loco_id_column_index]);
                     DateTime startDate = DateTime.Parse(lineResultRaw[single_file_startdate_column_index]);
@@ -577,7 +577,7 @@ namespace LokoTrain_DBE_comparator_forms
 
             const int firstDataRowIndex = 12;
 
-            string projectDirectory = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
+            string projectDirectory = Directory.GetParent(Environment.CurrentDirectory).FullName;
             string outputDirPath = Path.Combine(projectDirectory, operator_output_resultDir);
             string templateRefundPath = Path.Combine(projectDirectory, operator_output_templateDir, refund_output_templateFileName);
 
@@ -612,8 +612,8 @@ namespace LokoTrain_DBE_comparator_forms
                         break;
 
                     string[] results = line.Split(delimiter);
-                    error_consumption += Double.Parse(results[entry_column], CultureInfo.InvariantCulture);
-                    error_recuperation += Double.Parse(results[entry_column + 2], CultureInfo.InvariantCulture);
+                    error_consumption += Double.Parse(results[entry_column], CultureInfo.CurrentCulture);
+                    error_recuperation += Double.Parse(results[entry_column + 2], CultureInfo.CurrentCulture);
 
                     DateTime startDate = DateTime.Parse(results[0]);
                     DateTime endDate = DateTime.Parse(results[1]);  
