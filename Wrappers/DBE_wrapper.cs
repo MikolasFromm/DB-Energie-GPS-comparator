@@ -44,6 +44,10 @@ namespace LokoTrain_DBE_comparator_forms.Wrappers
 
                     string[] parts = line.Split(delimeter);
 
+                    // when reading empty row, break
+                    if (parts[1].Length == 0)
+                        break;
+
                     var locoId = Comparator.GetLocoId(parts[1]);
                     if (!locos.Contains(locoId))
                         locos.Add(locoId);
@@ -149,6 +153,7 @@ namespace LokoTrain_DBE_comparator_forms.Wrappers
                     row++;
                 }
             }
+
             Entries = output_list;
         }
     }
