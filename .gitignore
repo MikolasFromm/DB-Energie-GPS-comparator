@@ -403,3 +403,4 @@ FodyWeavers.xsd
 *.fls
 *.gz
 docu/_minted-documentation/*
+*.xlsx
