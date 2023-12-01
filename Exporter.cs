@@ -275,11 +275,9 @@ namespace LokoTrain_DBE_comparator_forms
             bool useExportPaths = false;
 
             string projectDirectory = null;
-            string exportProjectDirectory = null;
             try
             {
-                projectDirectory = Directory.GetParent(Environment.CurrentDirectory).FullName;
-                exportProjectDirectory = Environment.CurrentDirectory;
+                projectDirectory = Directory.GetCurrentDirectory();
             }
             catch 
             {
@@ -287,13 +285,13 @@ namespace LokoTrain_DBE_comparator_forms
             }
             
             string templatePath = Path.Combine(projectDirectory, operator_output_templateDir, operator_output_templateFileName);
-            string exportTemplatePath = Path.Combine(exportProjectDirectory, operator_output_templateDir, operator_output_templateFileName);
+            string exportTemplatePath = Path.Combine(projectDirectory, operator_output_templateDir, operator_output_templateFileName);
 
             string templateRefundPath = Path.Combine(projectDirectory, operator_output_templateDir, refund_output_templateFileName);
-            string exportTemplateRefundPath = Path.Combine(exportProjectDirectory, operator_output_templateDir, refund_output_templateFileName);
+            string exportTemplateRefundPath = Path.Combine(projectDirectory, operator_output_templateDir, refund_output_templateFileName);
 
             string outputDirPath = Path.Combine(projectDirectory, operator_output_resultDir);
-            string exportOutputDirPath = Path.Combine(exportProjectDirectory, operator_output_resultDir);
+            string exportOutputDirPath = Path.Combine(projectDirectory, operator_output_resultDir);
 
             if (!Directory.Exists(outputDirPath) && !Directory.Exists(exportOutputDirPath))
                 Directory.CreateDirectory(exportOutputDirPath);
@@ -487,7 +485,16 @@ namespace LokoTrain_DBE_comparator_forms
 
         public void ExportAndFillTemplate(EvaluationResults evaluationResults)
         {
-            string projectDirectory = Directory.GetParent(Environment.CurrentDirectory).FullName;
+            string projectDirectory = null;
+            try
+            {
+                projectDirectory = Directory.GetCurrentDirectory();
+            }
+            catch
+            {
+                throw new Exception("Could not determine current project directory");
+            }
+
             string outputDirPath = Path.Combine(projectDirectory, operator_output_resultDir);
             string templateRefundPath = Path.Combine(projectDirectory, operator_output_templateDir, refund_output_templateFileName);
 
@@ -577,7 +584,16 @@ namespace LokoTrain_DBE_comparator_forms
 
             const int firstDataRowIndex = 12;
 
-            string projectDirectory = Directory.GetParent(Environment.CurrentDirectory).FullName;
+            string projectDirectory = null;
+            try
+            {
+                projectDirectory = Directory.GetCurrentDirectory();
+            }
+            catch
+            {
+                throw new Exception("Could not determine current project directory");
+            }
+
             string outputDirPath = Path.Combine(projectDirectory, operator_output_resultDir);
             string templateRefundPath = Path.Combine(projectDirectory, operator_output_templateDir, refund_output_templateFileName);
 
