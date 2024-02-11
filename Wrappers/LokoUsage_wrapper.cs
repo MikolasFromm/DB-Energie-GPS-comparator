@@ -1,6 +1,5 @@
-﻿using Excel = Microsoft.Office.Interop.Excel;
+﻿using ClosedXML.Excel;
 using LokoTrain_DBE_comparator_forms.Structures;
-using Microsoft.Office.Interop.Excel;
 
 ///<sumary>
 /// Wrapper reading all sheets from lokousage excel file. 
@@ -24,70 +23,60 @@ namespace LokoTrain_DBE_comparator_forms.Wrappers
 
         public Dictionary<LocoId, List<CustomerDateSpan>> GetAllCustomers(IEnumerable<LocoId> locomotives)
         {
-            Excel.Application oXL = new Excel.Application();
-            oXL.Visible = false;
-            Excel.Workbook oWB = oXL.Workbooks.Open(filename, 3, false, 5);
-
             Dictionary<LocoId, List<CustomerDateSpan>> output_dictionary = new();
 
-            foreach (LocoId loco in locomotives)
+            using (var lokousage_file = new XLWorkbook(filename))
             {
-                output_dictionary.Add(loco, new List<CustomerDateSpan>());
-                Excel.Worksheet oSheet = oWB.Worksheets[loco.shortId];
-                int row = 7;
-                DateTime last_date = DateTime.Parse("01.01.1970"); //fallback to anyhow initialize this value
-                bool date_loaded = false;
-                while (true)
+                foreach (var loco in locomotives)
                 {
-                    if (oSheet.Cells[row, 2].Value == null)
-                        break;
-
-                    string date = oSheet.Cells[row, 2].Value.ToString();
-                    if (!date_loaded)
+                    output_dictionary.Add(loco, new List<CustomerDateSpan>());
+                    var locosheet = lokousage_file.Worksheet(loco.shortId);
+                    int row = 7;
+                    DateTime last_date = DateTime.Parse("01.01.1970"); //fallback to anyhow initialize this value
+                    bool date_loaded = false;
+                    while (true)
                     {
-                        last_date = DateTime.Parse(date);
-                        date_loaded = true;
+                        if (locosheet.Cell(row, 2).IsEmpty())
+                            break;
+
+                        if (date_loaded == false)
+                        {
+                            last_date = locosheet.Cell(row, 2).GetDateTime();
+                            date_loaded = true;
+                        }
+
+                        // at least one column must be unempty
+                        int hours_total = 0;
+                        if (locosheet.Cell(row, 3).IsEmpty() == false)
+                            hours_total = locosheet.Cell(row, 3).GetValue<int>();
+                        else if (locosheet.Cell(row, 4).IsEmpty() == false)
+                            hours_total = locosheet.Cell(row, 4).GetValue<int>();
+                        else if (locosheet.Cell(row, 5).IsEmpty() == false)
+                            hours_total = locosheet.Cell(row, 5).GetValue<int>();
+                        else if (locosheet.Cell(row, 6).IsEmpty() == false)
+                            hours_total = locosheet.Cell(row, 6).GetValue<int>();
+                        else if (locosheet.Cell(row, 7).IsEmpty() == false)
+                            hours_total = locosheet.Cell(row, 7).GetValue<int>();
+                        else if (locosheet.Cell(row, 8).IsEmpty() == false)
+                            hours_total = locosheet.Cell(row, 8).GetValue<int>();
+
+                        string[] customer_parts = locosheet.Cell(row, 11).GetText().Split('/');
+                        string customer;
+                        if (customer_parts.Length > 1) // when "ČDC / N30 + oprava" -> "ČDC " -> "ČDC"
+                            customer = customer_parts[0].Substring(0, customer_parts[0].Length - 1);
+                        else
+                            customer = customer_parts[0];
+
+                        customers.Add(customer);
+
+                        DateTime new_date = last_date.AddHours(hours_total);
+
+                        output_dictionary[loco].Add(new CustomerDateSpan(last_date, new_date, customer));
+                        last_date = new_date;
+                        row++;
                     }
-                    // at least one column must be unempty
-                    int hours_total = 0;
-                    if (oSheet.Cells[row, 3].Value != null)
-                        hours_total = (int)oSheet.Cells[row, 3].Value;
-                    else if (oSheet.Cells[row, 4].Value != null)
-                        hours_total = (int)oSheet.Cells[row, 4].Value;
-                    else if (oSheet.Cells[row, 5].Value != null)
-                        hours_total = (int)oSheet.Cells[row, 5].Value;
-                    else if (oSheet.Cells[row, 6].Value != null)
-                        hours_total = (int)oSheet.Cells[row, 6].Value;
-                    else if (oSheet.Cells[row, 7].Value != null)
-                        hours_total = (int)oSheet.Cells[row, 7].Value;
-                    else if (oSheet.Cells[row, 8].Value != null)
-                        hours_total = (int)oSheet.Cells[row, 8].Value;
-
-                    string[] customer_parts = oSheet.Cells[row, 11].Value.ToString().Split('/');
-                    string customer;
-                    if (customer_parts.Length > 1) // when "ČDC / N30 + oprava" -> "ČDC " -> "ČDC"
-                        customer = customer_parts[0].Substring(0, customer_parts[0].Length - 1);
-                    else
-                        customer = customer_parts[0];
-
-                    customers.Add(customer);
-
-                    DateTime new_date = last_date.AddHours(hours_total);
-
-                    output_dictionary[loco].Add(new CustomerDateSpan(last_date, new_date, customer));
-                    last_date = new_date;
-                    row++;
                 }
             }
-
-            // close the file properly
-
-            oWB.Close(false);
-            System.Runtime.InteropServices.Marshal.ReleaseComObject(oWB);
-
-            oXL.Quit();
-            System.Runtime.InteropServices.Marshal.ReleaseComObject(oXL);
-
             return output_dictionary;
         }
     }
