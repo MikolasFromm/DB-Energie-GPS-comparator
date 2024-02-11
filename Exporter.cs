@@ -1,4 +1,4 @@
-﻿using Excel = Microsoft.Office.Interop.Excel;
+﻿using ClosedXML.Excel;
 using LokoTrain_DBE_comparator_forms.Structures;
 using System.Globalization;
 
@@ -49,15 +49,8 @@ namespace LokoTrain_DBE_comparator_forms
 
         private class ExcelOutputWrapper : IExcelWrapper
         {
-            private Excel.Application app = null;
-            private Excel.Workbooks workbooks = null;
-            private Excel.Workbook workbook = null;
-            private Excel.Sheets sheets = null;
-            private Excel.Worksheet sheet = null;
-            private Excel.Range range = null;
-            private Excel.Range cell_1 = null;
-            private Excel.Range cell_2 = null;
-            private Excel.Range cell_price = null;
+            private XLWorkbook workbook = null;
+            private IXLWorksheet sheet = null;
 
             private int nextLineIndex = 2; // 1-based and first row is occupied
 
@@ -70,14 +63,9 @@ namespace LokoTrain_DBE_comparator_forms
 
             public ExcelOutputWrapper(string filename, double price = 0)
             {
-                app = new Excel.Application();
-                app.Visible = false;
-                workbooks = app.Workbooks;
-                workbook = workbooks.Open(filename, Type.Missing, false);
-                sheets = workbook.Worksheets;
-                sheet = sheets[1];
-                cell_price = sheet.Cells[finalPriceRow, finalPriceColumn];
-                cell_price.Value = price;
+                workbook = new XLWorkbook(filename);
+                sheet = workbook.Worksheet(1);
+                sheet.Cell(finalPriceRow, finalPriceColumn).Value = price;
                 openned = true;
             }
 
@@ -89,95 +77,27 @@ namespace LokoTrain_DBE_comparator_forms
                 if (lines.Length + numbers.Length != correctDataArrayLen)
                     return;
 
-                cell_1 = sheet.Cells[nextLineIndex, 1];
-                cell_2 = sheet.Cells[nextLineIndex, numOfTextCols];
-                range = sheet.Range[cell_1, cell_2];
+                for (int i = 1; i <= numOfTextCols; i++)
+                    sheet.Cell(nextLineIndex, i).Value = lines[i-1];
 
-                range.Value = lines;
+                sheet.Cell(nextLineIndex, numOfTextCols + 1).Value = numbers[0];
+                sheet.Cell(nextLineIndex, numOfTextCols + 2).Value = numbers[1];
 
-                cell_1 = sheet.Cells[nextLineIndex, numOfTextCols + 1];
-                cell_2 = sheet.Cells[nextLineIndex, numOfTextCols + 2];
-                range = sheet.Range[cell_1, cell_2];
-                range.Value = numbers;
                 nextLineIndex++;
             }
 
             public void Close()
             {
                 workbook.Save();
-                workbook.Close(false, System.Reflection.Missing.Value, System.Reflection.Missing.Value);
-                workbooks.Close();
-
-                if (cell_price is not null)
-                {
-                    while (System.Runtime.InteropServices.Marshal.FinalReleaseComObject(cell_price) != 0) { };
-                    cell_price = null;
-                }
-
-                if (cell_1 is not null)
-                {
-                    while (System.Runtime.InteropServices.Marshal.FinalReleaseComObject(cell_1) != 0) { };
-                    cell_1 = null;
-                }
-
-                if (cell_2 is not null)
-                {
-                    while (System.Runtime.InteropServices.Marshal.FinalReleaseComObject(cell_2) != 0) { };
-                    cell_2 = null;
-                }
-
-                if (range is not null)
-                {
-                    while (System.Runtime.InteropServices.Marshal.FinalReleaseComObject(range) != 0) { };
-                    range = null;
-                }
-
-                if (sheet is not null)
-                {
-                    while (System.Runtime.InteropServices.Marshal.FinalReleaseComObject(sheet) != 0) { };
-                    sheet = null;
-                }
-
-                if (sheets is not null)
-                {
-                    while (System.Runtime.InteropServices.Marshal.FinalReleaseComObject(sheets) != 0) { };
-                    sheets = null;
-                }
-
-                if (workbook is not null)
-                {
-                    while (System.Runtime.InteropServices.Marshal.FinalReleaseComObject(workbook) != 0) { };
-                    workbook = null;
-                }
-
-                if (workbooks is not null)
-                {
-                    while (System.Runtime.InteropServices.Marshal.FinalReleaseComObject(workbooks) != 0) { };
-                    workbooks = null;
-                }
-
-                app.Quit();
-
-                if (app is not null)
-                {
-                    while (System.Runtime.InteropServices.Marshal.FinalReleaseComObject(app) != 0) { };
-                    app = null;
-                }
-
+                workbook.Dispose();
                 openned = false;
             }
         }
 
         private class ExcelRefundWrapper : IExcelWrapper
         {
-            private Excel.Application app = null;
-            private Excel.Workbooks workbooks = null;
-            private Excel.Workbook workbook = null;
-            private Excel.Sheets sheets = null;
-            private Excel.Worksheet sheet = null;
-            private Excel.Range range = null;
-            private Excel.Range cell_1 = null;
-            private Excel.Range cell_2 = null;
+            private XLWorkbook workbook = null;
+            private IXLWorksheet sheet = null;
 
             private int nextLineIndex = 11;
             private const int correctDataArrayLen = 5;
@@ -186,12 +106,8 @@ namespace LokoTrain_DBE_comparator_forms
 
             public ExcelRefundWrapper(string filename)
             {
-                app = new Excel.Application();
-                app.Visible = false;
-                workbooks = app.Workbooks;
-                workbook = workbooks.Open(filename, Type.Missing, false);
-                sheets = workbook.Worksheets;
-                sheet = sheets[1];
+                workbook = new XLWorkbook(filename);
+                sheet = workbook.Worksheet(1);
                 openned = true;
             }
 
@@ -203,69 +119,16 @@ namespace LokoTrain_DBE_comparator_forms
                 if (lines.Length != correctDataArrayLen)
                     return;
 
-                cell_1 = sheet.Cells[nextLineIndex, 1];
-                cell_2 = sheet.Cells[nextLineIndex, correctDataArrayLen];
-                range = sheet.Range[cell_1, cell_2];
-                range.Value = lines;
+                for (int i = 1; i <= correctDataArrayLen;i++)
+                    sheet.Cell(nextLineIndex, i).Value = lines[i-1];
+
                 nextLineIndex++;
             }
 
             public void Close()
             {
                 workbook.Save();
-                workbook.Close(false, System.Reflection.Missing.Value, System.Reflection.Missing.Value);
-                workbooks.Close();
-
-                if (cell_1 is not null)
-                {
-                    while (System.Runtime.InteropServices.Marshal.FinalReleaseComObject(cell_1) != 0) { };
-                    cell_1 = null;
-                }
-
-                if (cell_2 is not null)
-                {
-                    while (System.Runtime.InteropServices.Marshal.FinalReleaseComObject(cell_2) != 0) { };
-                    cell_2 = null;
-                }
-
-                if (range is not null)
-                {
-                    while (System.Runtime.InteropServices.Marshal.FinalReleaseComObject(range) != 0) { };
-                    range = null;
-                }
-
-                if (sheet is not null)
-                {
-                    while (System.Runtime.InteropServices.Marshal.FinalReleaseComObject(sheet) != 0) { };
-                    sheet = null;
-                }
-
-                if (sheets is not null)
-                {
-                    while (System.Runtime.InteropServices.Marshal.FinalReleaseComObject(sheets) != 0) { };
-                    sheets = null;
-                }
-
-                if (workbook is not null)
-                {
-                    while (System.Runtime.InteropServices.Marshal.FinalReleaseComObject(workbook) != 0) { };
-                    workbook = null;
-                }
-
-                if (workbooks is not null)
-                {
-                    while (System.Runtime.InteropServices.Marshal.FinalReleaseComObject(workbooks) != 0) { };
-                    workbooks = null;
-                }
-
-                app.Quit();
-
-                if (app is not null)
-                {
-                    while (System.Runtime.InteropServices.Marshal.FinalReleaseComObject(app) != 0) { };
-                    app = null;
-                }
-
+                workbook.Dispose();
                 openned = false;
             }
         }
@@ -331,6 +194,8 @@ namespace LokoTrain_DBE_comparator_forms
             Dictionary<string, IExcelWrapper> customerSheets = new();
             HashSet<string> untouchedCustomers = new();
 
+            CultureInfo cultureInfo = new CultureInfo("de-DE");
+
 
             // create new file for each operator from template and open the workbook
             foreach (var customer in customerNames)
@@ -378,7 +243,7 @@ namespace LokoTrain_DBE_comparator_forms
                     string[] lineResultRaw = line.Split(delimiter);
 
                     string[] lineResultString = lineResultRaw.Take(6).ToArray();
-                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index], CultureInfo.CurrentCulture), Double.Parse(lineResultRaw[single_file_recuperation_column_index], CultureInfo.CurrentCulture) };
+                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index], cultureInfo), Double.Parse(lineResultRaw[single_file_recuperation_column_index], cultureInfo) };
 
                     DateTime startDate = DateTime.Parse(lineResultRaw[single_file_startdate_column_index]);
                     DateTime endDate = DateTime.Parse(lineResultRaw[single_file_enddate_column_index]);
@@ -418,7 +283,7 @@ namespace LokoTrain_DBE_comparator_forms
                     string[] lineResultRaw = line.Split(delimiter);
 
                     string[] lineResultString = lineResultRaw.Take(6).ToArray();
-                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index], CultureInfo.CurrentCulture), Double.Parse(lineResultRaw[single_file_recuperation_column_index], CultureInfo.CurrentCulture) };
+                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index], cultureInfo), Double.Parse(lineResultRaw[single_file_recuperation_column_index], cultureInfo) };
 
                     LocoId locoId = Comparator.GetLocoId(lineResultRaw[single_file_loco_id_column_index]);
                     DateTime startDate = DateTime.Parse(lineResultRaw[single_file_startdate_column_index]);
@@ -505,6 +370,8 @@ namespace LokoTrain_DBE_comparator_forms
             File.Copy(templateRefundPath, outputErrorFilePath);
             IExcelWrapper excelWrapper = new ExcelRefundWrapper(outputErrorFilePath);
 
+            CultureInfo cultureInfo = new CultureInfo("de-DE");
+
             // go through all error values
             {
                 StreamReader reader = new StreamReader(dbe_input_filename);
@@ -522,7 +389,7 @@ namespace LokoTrain_DBE_comparator_forms
                     string[] lineResultRaw = line.Split(delimiter);
 
                     string[] lineResultString = lineResultRaw.Take(6).ToArray();
-                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index], CultureInfo.CurrentCulture), Double.Parse(lineResultRaw[single_file_recuperation_column_index], CultureInfo.CurrentCulture) };
+                    double[] lineResultDouble = new double[] { Double.Parse(lineResultRaw[single_file_consumption_column_index], cultureInfo), Double.Parse(lineResultRaw[single_file_recuperation_column_index], cultureInfo) };
 
                     LocoId locoId = Comparator.GetLocoId(lineResultRaw[single_file_loco_id_column_index]);
                     DateTime startDate = DateTime.Parse(lineResultRaw[single_file_startdate_column_index]);
@@ -604,6 +471,8 @@ namespace LokoTrain_DBE_comparator_forms
             File.Copy(templateRefundPath, outputErrorFilePath);
             IExcelWrapper excelWrapper = new ExcelRefundWrapper(outputErrorFilePath);
 
+            CultureInfo cultureInfo = new CultureInfo("de-DE");
+
             // false entries handle
             {
                 double error_consumption = 0;
@@ -628,8 +497,8 @@ namespace LokoTrain_DBE_comparator_forms
                         break;
 
                     string[] results = line.Split(delimiter);
-                    error_consumption += Double.Parse(results[entry_column], CultureInfo.CurrentCulture);
-                    error_recuperation += Double.Parse(results[entry_column + 2], CultureInfo.CurrentCulture);
+                    error_consumption += Double.Parse(results[entry_column], cultureInfo);
+                    error_recuperation += Double.Parse(results[entry_column + 2], cultureInfo);
 
                     DateTime startDate = DateTime.Parse(results[0]);
                     DateTime endDate = DateTime.Parse(results[1]);  
