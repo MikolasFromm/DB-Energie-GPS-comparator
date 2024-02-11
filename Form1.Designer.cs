@@ -47,6 +47,7 @@
             label_OpenFileDialog_OutputDir = new Label();
             button_OpenFileDialog_OutputDir = new Button();
             folderBrowserDialog_OutputDir = new FolderBrowserDialog();
+            label1 = new Label();
             SuspendLayout();
             // 
             // Label_appName
@@ -242,11 +243,23 @@
             button_OpenFileDialog_OutputDir.UseVisualStyleBackColor = true;
             button_OpenFileDialog_OutputDir.Click += button_OpenFileDialog_OutputDir_Click;
             // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            label1.Location = new Point(1175, 799);
+            label1.Margin = new Padding(4, 0, 4, 0);
+            label1.Name = "label1";
+            label1.Size = new Size(258, 32);
+            label1.TabIndex = 15;
+            label1.Text = "Pouze desetinná čárka!";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1568, 994);
+            Controls.Add(label1);
             Controls.Add(button_OpenFileDialog_OutputDir);
             Controls.Add(label_OpenFileDialog_OutputDir);
             Controls.Add(textBox_InvoicePrice);
@@ -291,5 +304,6 @@
         private Label label_OpenFileDialog_OutputDir;
         private Button button_OpenFileDialog_OutputDir;
         private FolderBrowserDialog folderBrowserDialog_OutputDir;
+        private Label label1;
     }
 }

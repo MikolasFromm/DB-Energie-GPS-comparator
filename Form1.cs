@@ -1,6 +1,7 @@
-using LokoTrain_DBE_comparator_forms.Structures;
+Ôªøusing LokoTrain_DBE_comparator_forms.Structures;
 using LokoTrain_DBE_comparator_forms.Wrappers;
 using System.ComponentModel;
+using System.Globalization;
 
 namespace LokoTrain_DBE_comparator_forms
 {
@@ -38,7 +39,7 @@ namespace LokoTrain_DBE_comparator_forms
             int basey = this.panel_LocoGPS.Location.Y;
 
             var label_ChooseGpsToEachLoco = new Label();
-            label_ChooseGpsToEachLoco.Text = "Vyberte GPS z·znam pro kaûdou lokomotivu:";
+            label_ChooseGpsToEachLoco.Text = "Vyberte GPS z√°znam pro ka≈ædou lokomotivu:";
             label_ChooseGpsToEachLoco.Location = new Point(0, 0);
             label_ChooseGpsToEachLoco.AutoSize = true;
             label_ChooseGpsToEachLoco.Font = new Font("Segoe UI", 12);
@@ -65,7 +66,7 @@ namespace LokoTrain_DBE_comparator_forms
                 {
                     using (OpenFileDialog ofd = new OpenFileDialog())
                     {
-                        ofd.Title = $"Vyberte GPS z·znam pro lokomotivu {loco.shortId}";
+                        ofd.Title = $"Vyberte GPS z√°znam pro lokomotivu {loco.shortId}";
                         ofd.Filter = "XLSX (*.xlsx)|*.xlsx";
                         if (ofd.ShowDialog() == DialogResult.OK)
                         {
@@ -112,7 +113,7 @@ namespace LokoTrain_DBE_comparator_forms
 
         private void button_FileDialog_InputData_Click(object sender, EventArgs e)
         {
-            openFileDialog_InputData.Title = "Vyberte soubor se vstupnÌmi daty: [tEns / LastProfile]";
+            openFileDialog_InputData.Title = "Vyberte soubor se vstupn√≠mi daty: [tEns / LastProfile]";
             openFileDialog_InputData.Filter = "CSV (*.csv)|*.csv";
 
             if (!checkBox_Abstimmung.Checked && !checkBox_NonAbstimmung.Checked)
@@ -146,7 +147,7 @@ namespace LokoTrain_DBE_comparator_forms
 
         private void button_FileDialog_LokoUsage_Click(object sender, EventArgs e)
         {
-            openFileDialog_LokoUsage.Title = "Vyberte soubor s LokoUsage pro dan˝ mÏsÌc:";
+            openFileDialog_LokoUsage.Title = "Vyberte soubor s LokoUsage pro dan√Ω m√¨s√≠c:";
             openFileDialog_LokoUsage.Filter = "XLSX (*.xlsx)|*.xlsx";
 
             if (!checkBox_Abstimmung_CarrierCalculation.Checked)
@@ -179,13 +180,13 @@ namespace LokoTrain_DBE_comparator_forms
         {
             if (string.IsNullOrEmpty(inputFilePath))
             {
-                MessageBox.Show("VstupnÌ soubor nebyl vybr·n", "Chyba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Vstupn√≠ soubor nebyl vybr√°n", "Chyba", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
 
             if (checkMethod == CheckMethod.InvoiceCheck && checkBox_Abstimmung_CarrierCalculation.Checked && (string.IsNullOrEmpty(textBox_InvoicePrice.Text) || !Double.TryParse(textBox_InvoicePrice.Text, out double res)))
             {
-                MessageBox.Show("äpatn˝ form·t ËÌsla tarifu faktury", "Chyba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("≈†patn√Ω form√°t √®√≠sla tarifu faktury", "Chyba", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
 
@@ -202,16 +203,17 @@ namespace LokoTrain_DBE_comparator_forms
         {
             if (checkMethod == CheckMethod.None)
             {
-                MessageBox.Show("Vyberte prosÌm typ porovn·nÌ", "Chyba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Vyberte pros√≠m typ porovn√°n√≠", "Chyba", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
+            CultureInfo cultureInfo = new CultureInfo("cs-CZ");
 
             if (checkMethod == CheckMethod.InvoiceCheck && checkBox_Abstimmung_CarrierCalculation.Checked && lokoUsageLoaded)
             {
-                if (!Double.TryParse(textBox_InvoicePrice.Text, out double price))
+                if (!Double.TryParse(textBox_InvoicePrice.Text, cultureInfo, out double price))
                 {
-                    MessageBox.Show("äpatn˝ form·t ËÌsla tarifu faktury", "Chyba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("≈†patn√Ω form√°t ƒç√≠sla tarifu faktury", "Chyba", MessageBoxButtons.RetryCancel, MessageBoxIcon.Error);
                     return;
                 }
 
@@ -248,11 +250,12 @@ namespace LokoTrain_DBE_comparator_forms
         {
             DialogResult result;
 
-            if (e.Error is null)
-                result = MessageBox.Show("Porovn·nÌ dokonËeno. Po stisknutÌ OK ukonËÌte program.", "Hotovo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            button_StartCheck.Enabled = true;
 
+            if (e.Error is null)
+                result = MessageBox.Show("Porovn√°n√≠ dokonƒçeno. Po stisknut√≠ OK ukonƒç√≠te program.", "Hotovo", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
             else
-               result = MessageBox.Show($"{e.Error.Message}\n{e.Error.Source}\n{e.Error.StackTrace}", "Chyba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                result = MessageBox.Show($"{e.Error.Message}\n{e.Error.Source}\n{e.Error.StackTrace}", "Chyba", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
 
             if (result == DialogResult.OK)
             {
